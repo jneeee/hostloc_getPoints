@@ -1,4 +1,3 @@
-import os
 import time
 import random
 import re
@@ -171,36 +170,28 @@ def print_my_ip():
         print("获取当前 ip 地址失败：" + str(e))
 
 
-if __name__ == "__main__":
-    username = "账户"
-    password = "密码"
-    # username = os.environ["HOSTLOC_USERNAME"]
-    # password = os.environ["HOSTLOC_PASSWORD"]
-    #账户和密码
-    
-
-    # 分割用户名和密码为列表
+def run_getpoint(username, password):
     user_list = username.split(",")
     passwd_list = password.split(",")
 
-    if not username or not password:
-        print("未检测到用户名或密码，请检查环境变量是否设置正确！")
-    elif len(user_list) != len(passwd_list):
-        print("用户名与密码个数不匹配，请检查环境变量设置是否错漏！")
+    res = []
+    if len(user_list) != len(passwd_list):
+        res.append("用户名与密码个数不匹配，请检查环境变量设置是否错漏！")
     else:
         print_my_ip()
-        print("共检测到", len(user_list), "个帐户，开始获取积分")
-        print("*" * 30)
+        res.append("共检测到", len(user_list), "个帐户，开始获取积分")
+        res.append("*" * 30)
 
         # 依次登录帐户获取积分，出现错误时不中断程序继续尝试下一个帐户
         for i in range(len(user_list)):
             try:
                 s = login(user_list[i], passwd_list[i])
                 get_points(s, i + 1)
-                print("*" * 30)
+                res.append("*" * 30)
             except Exception as e:
-                print("程序执行异常：" + str(e))
-                print("*" * 30)
+                res.append("程序执行异常：" + str(e))
+                res.append("*" * 30)
             continue
 
-        print("程序执行完毕，获取积分过程结束")
+        res.append("程序执行完毕，获取积分过程结束")
+    return res
