@@ -112,10 +112,10 @@ def check_login_status(s: req_Session, number_c: int) -> bool:
 
     if len(test_title) != 0:  # 确保正则匹配到了内容，防止出现数组索引越界的情况
         if test_title[0] != "个人资料 -  全球主机交流论坛 -  Powered by Discuz!":
-            LOG.info("第", number_c, "个帐户登录失败！")
+            LOG.info(f"第{number_c}个帐户登录失败！")
             return False
         else:
-            LOG.info("第", number_c, "个帐户登录成功！")
+            LOG.info(f"第{number_c}个帐户登录成功！")
             return True
     else:
         LOG.info("无法在用户设置页面找到标题，该页面存在错误或被防 CC 机制拦截！")
@@ -148,7 +148,7 @@ def get_points(s: req_Session, number_c: int):
             try:
                 res = s.get(url)
                 res.raise_for_status()
-                LOG.info("第", i + 1, "个用户空间链接访问成功")
+                LOG.info(f"第{i + 1}个用户空间链接访问成功")
                 time.sleep(0.5)  # 每访问一个链接后休眠1秒，以避免触发论坛的防CC机制
             except Exception as e:
                 LOG.info("链接访问异常：" + str(e))
@@ -176,6 +176,7 @@ def run_getpoint(username, password):
                 get_points(s, i + 1)
                 res.append("*" * 30)
             except Exception as e:
+                LOG.exception(e)
                 res.append("程序执行异常：" + str(e))
                 res.append("*" * 30)
 
