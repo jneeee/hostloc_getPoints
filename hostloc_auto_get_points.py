@@ -6,7 +6,7 @@ import requests
 
 from pyaes import AESModeOfOperationCBC
 from requests import Session as req_Session
-
+from taskbox.utils.tools import LOG
 
 # 随机生成用户空间链接
 def randomly_gen_uspace_url() -> list:
@@ -39,7 +39,7 @@ def check_anti_cc() -> dict:
     cookie_name = re.findall('cookie="(.*?)="', res.text)
 
     if len(aes_keys) != 0:  # 开启了防CC机制
-        print("检测到防 CC 机制开启！")
+        LOG.info("检测到防 CC 机制开启！")
         if len(aes_keys) != 3 or len(cookie_name) != 1:  # 正则表达式匹配到了参数，但是参数个数不对（不正常的情况）
             result_dict["ok"] = 0
         else:  # 匹配正常时将参数存到result_dict中
@@ -61,9 +61,9 @@ def gen_anti_cc_cookies() -> dict:
 
     if anti_cc_status:  # 不为空，代表开启了防CC机制
         if anti_cc_status["ok"] == 0:
-            print("防 CC 验证过程所需参数不符合要求，页面可能存在错误！")
+            LOG.info("防 CC 验证过程所需参数不符合要求，页面可能存在错误！")
         else:  # 使用获取到的三个值进行AES Cipher-Block Chaining解密计算以生成特定的Cookie值用于通过防CC验证
-            print("自动模拟计尝试通过防 CC 验证")
+            LOG.info("自动模拟计尝试通过防 CC 验证")
             a = bytes(toNumbers(anti_cc_status["a"]))
             b = bytes(toNumbers(anti_cc_status["b"]))
             c = bytes(toNumbers(anti_cc_status["c"]))
@@ -112,13 +112,13 @@ def check_login_status(s: req_Session, number_c: int) -> bool:
 
     if len(test_title) != 0:  # 确保正则匹配到了内容，防止出现数组索引越界的情况
         if test_title[0] != "个人资料 -  全球主机交流论坛 -  Powered by Discuz!":
-            print("第", number_c, "个帐户登录失败！")
+            LOG.info("第", number_c, "个帐户登录失败！")
             return False
         else:
-            print("第", number_c, "个帐户登录成功！")
+            LOG.info("第", number_c, "个帐户登录成功！")
             return True
     else:
-        print("无法在用户设置页面找到标题，该页面存在错误或被防 CC 机制拦截！")
+        LOG.info("无法在用户设置页面找到标题，该页面存在错误或被防 CC 机制拦截！")
         return False
 
 
@@ -131,16 +131,16 @@ def print_current_points(s: req_Session):
     points = re.findall("积分: (\d+)", res.text)
 
     if len(points) != 0:  # 确保正则匹配到了内容，防止出现数组索引越界的情况
-        print("帐户当前积分：" + points[0])
+        LOG.info("帐户当前积分：" + points[0])
     else:
-        print("无法获取帐户积分，可能页面存在错误或者未登录！")
-    time.sleep(5)
+        LOG.info("无法获取帐户积分，可能页面存在错误或者未登录！")
 
 
 # 依次访问随机生成的用户空间链接获取积分
 def get_points(s: req_Session, number_c: int):
     if check_login_status(s, number_c):
         print_current_points(s)  # 打印帐户当前积分
+        time.sleep(0.5)
         url_list = randomly_gen_uspace_url()
         # 依次访问用户空间链接获取积分，出现错误时不中断程序继续尝试访问下一个链接
         for i in range(len(url_list)):
@@ -148,26 +148,14 @@ def get_points(s: req_Session, number_c: int):
             try:
                 res = s.get(url)
                 res.raise_for_status()
-                print("第", i + 1, "个用户空间链接访问成功")
-                time.sleep(5)  # 每访问一个链接后休眠5秒，以避免触发论坛的防CC机制
+                LOG.info("第", i + 1, "个用户空间链接访问成功")
+                time.sleep(0.5)  # 每访问一个链接后休眠1秒，以避免触发论坛的防CC机制
             except Exception as e:
-                print("链接访问异常：" + str(e))
+                LOG.info("链接访问异常：" + str(e))
             continue
         print_current_points(s)  # 再次打印帐户当前积分
     else:
-        print("请检查你的帐户是否正确！")
-
-
-# 打印输出当前ip地址
-def print_my_ip():
-    api_url = "https://api.ipify.org/"
-    try:
-        res = requests.get(url=api_url)
-        res.raise_for_status()
-        res.encoding = "utf-8"
-        print("当前使用 ip 地址：" + res.text)
-    except Exception as e:
-        print("获取当前 ip 地址失败：" + str(e))
+        LOG.info("请检查你的帐户是否正确！")
 
 
 def run_getpoint(username, password):
@@ -178,8 +166,7 @@ def run_getpoint(username, password):
     if len(user_list) != len(passwd_list):
         res.append("用户名与密码个数不匹配，请检查环境变量设置是否错漏！")
     else:
-        print_my_ip()
-        res.append("共检测到", len(user_list), "个帐户，开始获取积分")
+        res.append(f"共检测到 {len(user_list)} 个帐户，开始获取积分")
         res.append("*" * 30)
 
         # 依次登录帐户获取积分，出现错误时不中断程序继续尝试下一个帐户
@@ -191,7 +178,6 @@ def run_getpoint(username, password):
             except Exception as e:
                 res.append("程序执行异常：" + str(e))
                 res.append("*" * 30)
-            continue
 
         res.append("程序执行完毕，获取积分过程结束")
     return res
