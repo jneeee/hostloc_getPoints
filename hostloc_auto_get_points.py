@@ -8,6 +8,9 @@ from pyaes import AESModeOfOperationCBC
 from requests import Session as req_Session
 from taskbox.utils.tools import LOG
 
+
+other_info = []
+
 # 随机生成用户空间链接
 def randomly_gen_uspace_url() -> list:
     url_list = []
@@ -132,6 +135,8 @@ def print_current_points(s: req_Session):
 
     if len(points) != 0:  # 确保正则匹配到了内容，防止出现数组索引越界的情况
         LOG.info("帐户当前积分：" + points[0])
+        global other_info
+        other_info.append(points[0])
     else:
         LOG.info("无法获取帐户积分，可能页面存在错误或者未登录！")
 
@@ -167,18 +172,16 @@ def run_getpoint(username, password):
         res.append("用户名与密码个数不匹配，请检查环境变量设置是否错漏！")
     else:
         res.append(f"共检测到 {len(user_list)} 个帐户，开始获取积分")
-        res.append("*" * 30)
 
         # 依次登录帐户获取积分，出现错误时不中断程序继续尝试下一个帐户
         for i in range(len(user_list)):
             try:
                 s = login(user_list[i], passwd_list[i])
                 get_points(s, i + 1)
-                res.append("*" * 30)
+                global other_info
+                res.append('积分:' + '->'.join(other_info))
             except Exception as e:
                 LOG.exception(e)
-                res.append("程序执行异常：" + str(e))
-                res.append("*" * 30)
 
-        res.append("程序执行完毕，获取积分过程结束")
+        res.append("程序执行完毕")
     return res
