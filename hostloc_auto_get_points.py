@@ -184,4 +184,4 @@ def run_getpoint(username, password):
                 LOG.exception(e)
 
         res.append("程序执行完毕")
-    return res
+    return ','.join(res)
